@@ -74,51 +74,72 @@
 ; This is the main engine for asserting implications about the responses to our guesses
 ; Parms:
 ;   guess : List<Color>    ; Our guess this time
-;   positions : List<Position>  ; List of positions in the tagret solution which are available to match with part of our guess
+;   possible_solution : List<Color>  ; A list of colors which must have corr_pos items in common with the guess
 ;   corr_pos  : Int        ; Number of stones in our guess with correct color AND position
-;   corr_col  : Int        ; Number of stones in our guess with correct color
-;   cur_pos   : Int        ; Current poistion we're examining (starts at 0)
 ;
 ; Semantics and possible sanity checks:
 ; corr_pos + cor_col should never be greater than len(positions)
 ; 'guess' contains just the colors, not positions, as the colors are for positions 0 - 3, in order. 
-(define-fun-rec GuessResult ((guess (List Color)) (positions (List Position)) (corr_pos Int) (corr_col Int)) Bool
+(define-fun-rec GuessResult ((guess (List Color)) (possible_solution (List Color)) (corr_pos Int)) Bool
     (ite
-        ; First, if corr_pos+corr_col > len(guess), then there aren't enough pegs left in our guess
-        ; to account for all of the responses, so this branch should fail
-        (> (+ corr_pos corr_col) (ColorListLen guess))
-        false
-        ; Otherwise, either...
-        ;   corr_pos > 0 AND...
-        ;      the head of guess is correct OR...
-        ;      the head of guess is not correct
-        ;  OR 
-        ;   corr_col > 0 AND...
-        ;      the head of guess matches one of the colors in the proposed solution at the positions in positions list
-        ;      OR the head of guess doesn't match one of the colors in the proposed solution at the positions in positions list
-        ;  OR
-        
-        true
+        ; First, if guess is empty, then we should not recurse
+        (= 0 (ColorListLen guess))
+        (ite
+            ; If corr_pos == 0 (when guess is empty), then this is possibly a solution, otherwise, not
+            (= corr_pos 0)
+            true
+            false
+        )
+        ; Below here, guess still has some elements
+        ; EITHER this position matches OR this position doesn't match
+        (or
+            ; If this position matches, then the heads match AND the rest has one fewer correct pegs
+            (and
+                (= (head guess) (head possible_solution))
+                (GuessResult (tail guess) (tail possible_solution) (- corr_pos 1))
+            )
+            ; If this position doesn't match, then the rest has to account for the remaining correct pegs
+            (and
+                (not (= (head guess) (head possible_solution)))
+                (GuessResult (tail guess) (tail possible_solution) corr_pos)
+            )
+        )
     ) 
 )
 
-(declare-const guess_one (List Color))
-(assert (= guess_one (insert C (insert D (insert E (insert F (as nil (List Color))))))))
-(assert (= (GuessResult guess_one positions 1 0) true))
+; Our secret target solution is: C A F E
 
-(declare-const guess_two (List Color))
-(assert (= (ColorListLen guess_two) 4))
-(assert (not (= guess_two guess_one)))
+; Guess A A A A with one match (position 3)
+(declare-const guess1 (List Color))
+(assert (= guess1 (insert A (insert A (insert A (insert A (as nil (List Color))))))))
+(assert (GuessResult guess1 possible_solution 1))
 
-(declare-const guess_three (List Color))
-(assert (= (ColorListLen guess_three) 4))
-(assert (not (= guess_three guess_one)))
-(assert (not (= guess_three guess_two)))
+; Guess A B B B with zero matches
+(declare-const guess2 (List Color))
+(assert (= guess2 (insert A (insert B (insert B (insert B (as nil (List Color))))))))
+(assert (GuessResult guess2 possible_solution 0))
 
-(assert (GuessResult guess_one positions 1 3))
+; Guess B C A C with zero matches
+(declare-const guess3 (List Color))
+(assert (= guess3 (insert B (insert C (insert A (insert C (as nil (List Color))))))))
+(assert (GuessResult guess3 possible_solution 0))
 
+; Guess C D C A with one match (position 1)
+(declare-const guess4 (List Color))
+(assert (= guess4 (insert C (insert D (insert C (insert A (as nil (List Color))))))))
+(assert (GuessResult guess4 possible_solution 1))
 
+; Guess D A C D with one match (position 2)
+(declare-const guess5 (List Color))
+(assert (= guess5 (insert D (insert A (insert C (insert D (as nil (List Color))))))))
+(assert (GuessResult guess5 possible_solution 1))
 
+; Guess C A D E with three matches (positions 1, 2, 4)
+(declare-const guess6 (List Color))
+(assert (= guess6 (insert C (insert A (insert D (insert E (as nil (List Color))))))))
+(assert (GuessResult guess5 possible_solution 3))
+
+; yields unsat  Booo!
 
 (check-sat)
-(get-model)
+(get-value (guess1 guess2 guess3 guess4 guess5 guess6 possible_solution))
