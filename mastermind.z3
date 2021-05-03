@@ -109,30 +109,42 @@
 
 ; Our secret target solution is: C A F E
 
+; Cut here, and Z3 will suggest A A A A
+
 ; Guess A A A A with one match (position 3)
 (declare-const guess1 (List Color))
 (assert (= guess1 (insert A (insert A (insert A (insert A (as nil (List Color))))))))
 (assert (GuessResult guess1 possible_solution 1))
+
+; Cut here, and Z3 will suggest A B B B
 
 ; Guess A B B B with zero matches
 (declare-const guess2 (List Color))
 (assert (= guess2 (insert A (insert B (insert B (insert B (as nil (List Color))))))))
 (assert (GuessResult guess2 possible_solution 0))
 
+; Cut here, and Z3 will suggest B C A C
+
 ; Guess B C A C with zero matches
 (declare-const guess3 (List Color))
 (assert (= guess3 (insert B (insert C (insert A (insert C (as nil (List Color))))))))
 (assert (GuessResult guess3 possible_solution 0))
+
+; Cut here, and Z3 will suggest C D C A
 
 ; Guess C D C A with one match (position 1)
 (declare-const guess4 (List Color))
 (assert (= guess4 (insert C (insert D (insert C (insert A (as nil (List Color))))))))
 (assert (GuessResult guess4 possible_solution 1))
 
+; Cut here, and Z3 will suggest D A C D
+
 ; Guess D A C D with one match (position 2)
 (declare-const guess5 (List Color))
 (assert (= guess5 (insert D (insert A (insert C (insert D (as nil (List Color))))))))
 (assert (GuessResult guess5 possible_solution 1))
+
+; Cut here, and Z3 will suggest C A D E
 
 ; Guess C A D E with three matches (positions 1, 2, 4)
 (declare-const guess6 (List Color))
