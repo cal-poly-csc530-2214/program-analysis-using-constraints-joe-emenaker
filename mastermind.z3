@@ -111,7 +111,7 @@
 
 ; Cut here, and Z3 will suggest A A A A
 
-; Guess A A A A with one match (position 3)
+; Guess A A A A with one match (position 2)
 (declare-const guess1 (List Color))
 (assert (= guess1 (insert A (insert A (insert A (insert A (as nil (List Color))))))))
 (assert (GuessResult guess1 possible_solution 1))
@@ -149,9 +149,23 @@
 ; Guess C A D E with three matches (positions 1, 2, 4)
 (declare-const guess6 (List Color))
 (assert (= guess6 (insert C (insert A (insert D (insert E (as nil (List Color))))))))
-(assert (GuessResult guess5 possible_solution 3))
+(assert (GuessResult guess6 possible_solution 3))
 
-; yields unsat  Booo!
+; Cut here, and Z3 will suggest C A D F
+
+; Guess C A D F with two matches (positions 1, 2)
+(declare-const guess7 (List Color))
+(assert (= guess7 (insert C (insert A (insert D (insert F (as nil (List Color))))))))
+(assert (GuessResult guess7 possible_solution 2))
+
+; Cut here, and Z3 will suggest C A E E
+
+; Guess C A E E with three matches (positions 1, 2, 4)
+(declare-const guess8 (List Color))
+(assert (= guess8 (insert C (insert A (insert E (insert E (as nil (List Color))))))))
+(assert (GuessResult guess8 possible_solution 3))
+
+; Z3 suggests C A F E   Yay!
 
 (check-sat)
-(get-value (guess1 guess2 guess3 guess4 guess5 guess6 possible_solution))
+(get-value (guess1 guess2 guess3 guess4 guess5 guess6 guess7 guess8 possible_solution))
